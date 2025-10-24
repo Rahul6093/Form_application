@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 
 export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
   const [formData, setFormData] = useState({
@@ -13,6 +13,9 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
     email: "",
     sendEmail: true,
   });
+
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null); 
 
   const [isEdit, setIsEdit] = useState(false);
   const [originalNumber, setOriginalNumber] = useState(null); // ✅ track original number
@@ -32,6 +35,10 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
       });
       setOriginalNumber(selectedRow.number); // ✅ store original
       setIsEdit(true);
+      if (selectedRow.image) {
+        setPreview(`http://localhost:4000/uploads/${selectedRow.image}`);
+      } else {
+        setPreview(null);}
     } else {
       resetForm();
     }
@@ -48,6 +55,8 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
       email: "",
       sendEmail: true,
     });
+    setImage(null);
+    setPreview(null);
     setOriginalNumber(null);
     setIsEdit(false);
   };
@@ -58,6 +67,20 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage(file);
+      setPreview(URL.createObjectURL(file)); // show local preview
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImage(null);
+    setPreview(null);
+    document.getElementById("fileInput").value = null;
   };
 
   // Auto-load on Enter in Number field
@@ -80,8 +103,11 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
           });
           setOriginalNumber(res.data.number); // ✅ store original for editing
           setIsEdit(true);
+          if (res.data.image) {
+            setPreview(`http://localhost:4000/uploads/${res.data.image}`);
+          }
         } else {
-          alert("Record not found");
+          toast.error("Record not found");
         }
       } catch (err) {
         console.error(err);
@@ -107,26 +133,24 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
     return toast.error("Please enter a valid email address");
    }
 
+    const formPayload = new FormData();
+    Object.entries(formData).forEach(([key, value]) =>
+      formPayload.append(key, value)
+    );
+
+    if (image) formPayload.append("image", image);
+
     const timeValue =
       formData.time.length === 5 ? `${formData.time}:00` : formData.time;
 
     try {
       if (isEdit) {
-        // ✅ Use originalNumber instead of possibly edited formData.number
         await axios.put(
-          `http://localhost:4000/api/applicationsedit/${originalNumber}`,
-          {
-            name: formData.name,
-            date: formData.date,
-            time: timeValue,
-            address: formData.address,
-            status: formData.status,
-            email: formData.email,
-            sendEmail: formData.sendEmail,
-          }
-        );
+          `http://localhost:4000/api/applicationsedit/${originalNumber}`, formPayload,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );  
 
-        if (formData.number !== originalNumber) {
+        if (formData.number != originalNumber) {
           toast(`Number field changed but original record ${originalNumber} was updated!`, {
             icon: "⚠️",
           });} 
@@ -135,7 +159,10 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
         }
 
       } else {
-        await axios.post("http://localhost:4000/api/applicationsadd", formData);
+        await axios.post("http://localhost:4000/api/applicationsadd", formPayload, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        toast.success("Record added successfully!");
       }
 
       fetchData();
@@ -143,13 +170,19 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
       resetForm(); // ✅ clear form
     } catch (err) {
       console.error(err);
-      alert("Error saving record");
+      toast.error("Error saving record");
     }
   };
 
   return (
     <form className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-xl space-y-6 mt-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-gray-700">
+
+       <Toaster
+        position="top-right"  
+        reverseOrder={false}  
+      />
+
         <div className="flex flex-col">
           <label>Number</label>
           <input
@@ -230,7 +263,7 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
 
         <div className="flex items-center gap-2 mt-2">
           <input
-            className="text-green-600 bg-gray-100 border-gray-300 rounded "
+            className="custom-checkbox"
             type="checkbox"
             name="sendEmail"
             checked={formData.sendEmail}
@@ -239,6 +272,37 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
           <label>Send email notification?</label>
         </div>
       </div>
+
+      <div className="flex flex-col mt-2">
+          <label className="text-black">Attach Image</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="border border-gray-300 p-1 rounded cursor-pointer text-black w-[350px]"
+          />
+            {(preview || image) && (
+                <div className="mt-2 relative">
+                  <img
+                    src={image ? URL.createObjectURL(image) : preview}
+                    alt="Preview"
+                    className="h-24 w-24 object-cover rounded border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImage(null);
+                      setPreview(null);
+                      document.getElementById("fileInput") && (document.getElementById("fileInput").value = null);
+                    }}
+                    className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-xs px-2 py-1"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+      </div>
+
 
       <div className="flex justify-center mt-4">
         <button

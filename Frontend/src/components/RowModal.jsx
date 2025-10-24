@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 
 export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
   const [editable, setEditable] = useState(false);
@@ -14,6 +14,8 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
     email: "",
     sendEmail: false,
   });
+  const [image, setImage] = useState(null);      
+  const [preview, setPreview] = useState(null); 
 
   useEffect(() => {
     if (row) {
@@ -28,8 +30,19 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
         sendEmail: false,
       });
       setEditable(false);
+      setPreview(null);
+      setImage(null);
+
+    if (row.image) {
+        setPreview(`http://localhost:4000/uploads/${row.image}`);
+    } else {
+        setPreview(null);
+      }
+    
+    setImage(null); 
     }
   }, [row]);
+  
 
   const handleClose = () => {
   if (setSelectedRow) setSelectedRow(null); // reset the main form
@@ -55,6 +68,20 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
     }));
   };
 
+   const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImage(null);
+    setPreview(null);
+    document.getElementById("fileInput") && (document.getElementById("fileInput").value = null);
+  };
+
   const handleSave = async () => {
     try {
       const formattedDate = formData.date?.split("T")[0]; // ensure proper date
@@ -65,15 +92,18 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
       if (!emailRegex.test(formData.email)) {
         return toast.error("Please enter a valid email address");
       }
+      
+      // Prepare FormData for upload
+      const formPayload = new FormData();
+      Object.entries(formData).forEach(([key, value]) =>
+        formPayload.append(key, value)
+      );
 
-      await axios.put(`http://localhost:4000/api/applicationsedit/${formData.number}`, {
-        name: formData.name,
-        date: formattedDate,
-        time: timeValue,
-        address: formData.address,
-        status: formData.status,
-        email: formData.email,
-        sendEmail: formData.sendEmail, // include for conditional email sending
+      // Append new image if selected
+      if (image) formPayload.append("image", image);
+
+      await axios.put(`http://localhost:4000/api/applicationsedit/${row.number}`, formPayload, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       // Reset the main form
@@ -81,9 +111,12 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
 
       fetchData();
       onClose();
+      toast.success("Record updated successfully!");
+
     } catch (err) {
       console.error(err);
-      alert("Failed to update record");
+      toast.error("Failed to update record");
+
     }
   };
 
@@ -91,11 +124,20 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
     `w-full border rounded px-2 py-1 ${isEditable ? "bg-white cursor-text" : "bg-gray-100 cursor-not-allowed"}`;
 
   return (
-    <div id="modal-overlay" className="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-[90%] sm:w-[420px] relative" onClick={(e) => e.stopPropagation()}>
+    <div id="modal-overlay" className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-[90%] sm:w-[420px] relative overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-xl font-semibold text-center mb-4 text-blue-700">Application Details</h2>
 
         <div className="space-y-3 text-gray-700">
+        
+          {row.app_image && (
+            <img
+              src={`http://localhost:4000/uploads/${row.app_image}`}
+              alt="Saved"
+              className="m-auto w-32 h-32 object-cover rounded-md mb-2"
+            />
+          )}
+
           <div>
             <label className="font-semibold">Number:</label>
             <input type="text" name="number" value={formData.number} readOnly className={inputClass(false)} />
@@ -142,10 +184,37 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
           </div>
 
           {editable && (
-            <div className="flex items-center gap-2 mt-2">
-              <input type="checkbox" name="sendEmail" checked={formData.sendEmail} onChange={handleChange} />
-              <label>Send email notification?</label>
-            </div>
+            <>
+              <div className="flex items-center gap-2 mt-2">
+                <input type="checkbox" name="sendEmail" checked={formData.sendEmail} onChange={handleChange} />
+                <label>Send email notification?</label>
+              </div>
+
+              <div className="flex flex-col mt-2">
+                <label>Attach Image</label>
+                <input type="file" accept="image/*" onChange={handleImageChange} className="border border-gray-300 p-1 rounded cursor-pointer" />
+                 {preview && (
+                  <div className="mt-2 relative">
+                    <img
+                      src={image ? URL.createObjectURL(image) : preview}
+                      alt="Preview"
+                      className="h-24 w-24 object-cover rounded border"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImage(null);
+                        setPreview(null); // clears preview
+                        document.getElementById("fileInput").value = null;
+                      }}
+                      className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-xs px-2 py-1"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
 
@@ -172,6 +241,8 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
             ✕
           </button>
         </div>
+
+        <Toaster position="top-center" reverseOrder={false} />
       </div>
     </div>
   );

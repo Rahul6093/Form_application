@@ -1,4 +1,6 @@
 import nodemailer from "nodemailer";
+import path from "path";
+import fs from "fs";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -8,7 +10,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendApplicationEmail = async (data, oldEmail) => {
+export const sendApplicationEmail = async (data,  imagePath = null, oldEmail = null) => {
   const { name, date, time, address, status, email } = data;
 
   const intro = oldEmail && oldEmail !== email ? "✅ Email changed successfully\n\n" : "";
@@ -19,18 +21,27 @@ export const sendApplicationEmail = async (data, oldEmail) => {
     subject: "Application Update",
     text: `${intro}Dear ${name},
 
-A new application has been successfully added/updated.
+    A new application has been successfully added/updated.
 
-📋 Details:
-- Name: ${name}
-- Date: ${date}
-- Time: ${time}
-- Address: ${address}
-- Status: ${status}
+    📋 Details:
+    - Name: ${name}
+    - Date: ${date}
+    - Time: ${time}
+    - Address: ${address}
+    - Status: ${status}
 
-Best regards,
-Form Application System`,
-  };
+    Best regards,
+    Form Application System`,
+      };
+  
+  if (imagePath && fs.existsSync(imagePath)) {
+    mailOptions.attachments = [
+      {
+        filename: path.basename(imagePath),
+        path: imagePath,
+      },
+    ];
+  }
 
   await transporter.sendMail(mailOptions);
 };

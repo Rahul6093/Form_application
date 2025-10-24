@@ -1,10 +1,23 @@
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
+import multer from "multer";
+import path from "path";
 import db from "./db.js";
 import { sendApplicationEmail } from "./mailer.js";
 
 const app = express();
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) =>
+    cb(null, Date.now() + path.extname(file.originalname)),
+});
+
+const upload = multer({ storage });
+
+app.use("/uploads", express.static("uploads"));
+
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -29,24 +42,28 @@ app.get("/api/applications/:number", (req, res) => {
 });
 
 /* ----------------------------- ADD NEW RECORD ---------------------------- */
-app.post("/api/applicationsadd", (req, res) => {
+app.post("/api/applicationsadd", upload.single("image"), (req, res) => {
   const { name, date, time, address, status, email, sendEmail } = req.body;
+  const app_image = req.file ? req.file.filename : null;
 
   if (!name || !date || !time || !address || !status || !email)
     return res.status(400).json({ error: "All fields including email are required" });
 
   const sql = `
-    INSERT INTO applications (name, date, time, address, status, email)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO applications (name, date, time, address, status, email, app_image)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `;
 
-  db.query(sql, [name, date, time, address, status, email], async (err) => {
+  db.query(sql, [name, date, time, address, status, email, app_image], async (err) => {
     if (err) return res.status(500).json({ error: "Failed to add record" });
 
     // ✅ Send email only if checkbox was checked
     if (sendEmail) {
       try {
-        await sendApplicationEmail({ name, date, time, address, status, email });
+        const imgPath = app_image
+          ? path.join("uploads", app_image)
+          : null;
+        await sendApplicationEmail({ name, date, time, address, status, email }, imgPath);
       } catch (err) {
         console.error("Failed to send email:", err);
       }
@@ -57,37 +74,38 @@ app.post("/api/applicationsadd", (req, res) => {
 });
 
 /* ----------------------------- EDIT EXISTING ----------------------------- */
-app.put("/api/applicationsedit/:originalNumber", (req, res) => {
+app.put("/api/applicationsedit/:originalNumber", upload.single("image"), (req, res) => {
   const { originalNumber } = req.params;
   const { name, date, time, address, status, email, sendEmail } = req.body;
+  const app_image = req.file ? req.file.filename : null;
 
-  if (!originalNumber || !name || !date || !time || !address || !status || !email)
-    return res.status(400).json({ error: "All fields including email are required" });
+  console.log("originalNumber:", req.params.originalNumber);
+  console.log("body:", req.body);
+  console.log("file:", req.file);
 
-  // ✅ Step 1: get old email
-  db.query("SELECT email FROM applications WHERE number = ?", [originalNumber], (err, result) => {
-    if (err) return res.status(500).json({ error: "Failed to fetch record" });
-    if (!result.length) return res.status(404).json({ error: "Record not found" });
+  // if (!originalNumber || !name || !date || !time || !address || !status || !email)
+  //   return res.status(400).json({ error: "All fields including email are required" });
 
-    const oldEmail = result[0].email;
-
-    // ✅ Step 2: update data
+    //update data
     const sqlUpdate = `
       UPDATE applications
-      SET name = ?, date = ?, time = ?, address = ?, status = ?, email = ?
+      SET name = ?, date = ?, time = ?, address = ?, status = ?, email = ?, app_image=?
       WHERE number = ?
     `;
 
-    db.query(sqlUpdate, [name, date, time, address, status, email, originalNumber], async (err2) => {
-      if (err2) return res.status(500).json({ error: "Failed to update record" });
+    const params = [name, date, time, address, status, email, app_image, originalNumber];
+
+    db.query(sqlUpdate, params , async (err2,result) => {
+      if (err2) {
+        console.log(err2)
+        return res.status(500).json({ error: "Failed to update record" });
+      }
 
       // ✅ Step 3: send email only if checkbox checked
       if (sendEmail) {
         try {
-          await sendApplicationEmail(
-            { name, date, time, address, status, email },
-            oldEmail // optional parameter if your mailer supports notifying old/new address
-          );
+          const imagePath = app_image? path.join("uploads", app_image): null;
+          await sendApplicationEmail({ name, date, time, address, status, email }, imagePath);
         } catch (err) {
           console.error("Failed to send email:", err);
         }
@@ -96,7 +114,7 @@ app.put("/api/applicationsedit/:originalNumber", (req, res) => {
       res.json({ message: "Record updated successfully" });
     });
   });
-});
+// });
 
 /* ------------------------------ DELETE RECORD ---------------------------- */
 app.delete("/api/applications/:number", (req, res) => {
