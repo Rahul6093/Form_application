@@ -42,3 +42,36 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Base checkbox style */
+.custom-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  background-color: #f3f3f3;
+  cursor: pointer;
+  appearance: none; /* removes default checkbox style */
+  -webkit-appearance: none;
+  position: relative;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+/* Checked state */
+.custom-checkbox:checked {
+  background-color: #22c55e; /* Tailwind green-500 */
+  border-color: #16a34a; /* Tailwind green-600 */
+}
+
+/* Add check mark */
+.custom-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}

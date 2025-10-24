@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { RowModal } from "./RowModal";
 
-export const ApplicationTable = ({ data, fetchData, onRowClick }) => {
+export const ApplicationTable = ({ data, fetchData, onRowClick, setSelectedRow }) => {
   const [modalData, setModalData] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -24,19 +24,14 @@ export const ApplicationTable = ({ data, fetchData, onRowClick }) => {
     onRowClick(row);
   };
 
-  const closeModal = () => {
-    setModalData(null);
-  };
+  const closeModal = () => setModalData(null);
 
   const formatDate = (isoDate) => {
     if (!isoDate) return "";
     const date = new Date(isoDate);
-    return `${String(date.getDate()).padStart(2, "0")}/${String(
-      date.getMonth() + 1
-    ).padStart(2, "0")}/${date.getFullYear()}`;
+    return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
   };
 
-  // 🔍 Filtered data based on search term
   const filteredData = data.filter((row) => {
     const term = searchTerm.toLowerCase();
     return (
@@ -44,14 +39,14 @@ export const ApplicationTable = ({ data, fetchData, onRowClick }) => {
       row.name?.toLowerCase().includes(term) ||
       row.address?.toLowerCase().includes(term) ||
       row.status?.toLowerCase().includes(term) ||
+      (row.email || "").toLowerCase().includes(term) ||
       formatDate(row.date).includes(term) ||
-      row.time?.includes(term)
+      (row.time || "").includes(term)
     );
   });
 
   return (
     <div className="max-w-5xl mx-auto mt-8 relative">
-      {/* 🔍 Search/filter input */}
       <div className="flex justify-between items-center mb-3 text-gray-500">
         <input
           type="text"
@@ -62,7 +57,6 @@ export const ApplicationTable = ({ data, fetchData, onRowClick }) => {
         />
       </div>
 
-      {/* Scrollable table container */}
       <div className="max-h-[308px] overflow-y-auto border border-gray-300 rounded-lg shadow-lg scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-white">
         <table className="w-full bg-white text-sm">
           <thead className="bg-blue-600 text-white sticky top-0 z-10">
@@ -73,6 +67,7 @@ export const ApplicationTable = ({ data, fetchData, onRowClick }) => {
               <th className="border p-2 text-left">Time</th>
               <th className="border p-2 text-left">Address</th>
               <th className="border p-2 text-left">Status</th>
+              <th className="border p-2 text-left">Email</th>
               <th className="border p-2 text-center">Action</th>
             </tr>
           </thead>
@@ -90,6 +85,7 @@ export const ApplicationTable = ({ data, fetchData, onRowClick }) => {
                   <td className="p-2 text-center">{row.time}</td>
                   <td className="p-2">{row.address}</td>
                   <td className="p-2 text-center">{row.status}</td>
+                  <td className="p-2 text-center">{row.email}</td>
                   <td className="p-2 text-center">
                     <button
                       onClick={(e) => handleDelete(row.number, e)}
@@ -102,7 +98,7 @@ export const ApplicationTable = ({ data, fetchData, onRowClick }) => {
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="text-center p-4 text-gray-500 italic">
+                <td colSpan="8" className="text-center p-4 text-gray-500 italic">
                   No matching records found.
                 </td>
               </tr>
@@ -111,10 +107,7 @@ export const ApplicationTable = ({ data, fetchData, onRowClick }) => {
         </table>
       </div>
 
-      {/* Modal */}
-      {modalData && (
-        <RowModal row={modalData} onClose={closeModal} fetchData={fetchData} />
-      )}
+      {modalData && <RowModal row={modalData} onClose={closeModal}  setSelectedRow={setSelectedRow} fetchData={fetchData} />}
     </div>
   );
 };
