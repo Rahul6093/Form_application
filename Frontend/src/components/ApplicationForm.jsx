@@ -24,6 +24,8 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
 
+  const [loading, setLoading] = useState(false);
+
   // Populate form on edit via selectedRow
   useEffect(() => {
     if (selectedRow) {
@@ -128,6 +130,7 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
   const handleConfirm = async () => {
 
     setConfirmOpen(false);
+    setLoading(true); 
 
     if (
       !formData.number ||
@@ -181,14 +184,25 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
       fetchData();
       setSelectedRow(null);
       resetForm(); // ✅ clear form
-    } catch (err) {
+    } 
+    catch (err) {
       console.error(err);
       toast.error("Error saving record");
+    }
+     finally {
+        setLoading(false); // ✅ stop loading
     }
   };
 
   return (
     <form className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-xl space-y-6 mt-6">
+
+    {loading && (
+          <div className="fixed inset-0 h-screen w-screen bg-black/50 flex justify-center items-center z-50">
+            <div className="loader"></div> 
+          </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-gray-700">
 
        <Toaster
@@ -321,13 +335,14 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
         <button
           type="button"
           onClick={handleSubmit}
+          disabled={loading}
           className={`w-1/2 p-2 ${
             isEdit
               ? "bg-blue-500 hover:bg-blue-600"
               : "bg-green-500 hover:bg-green-600"
           } text-white rounded-lg font-semibold`}
         >
-          {isEdit ? "Edit" : "Add"}
+          {loading ? "Processing..." : isEdit ? "Edit" : "Add"}
         </button>
       </div>
 
@@ -337,6 +352,7 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
         onConfirm={handleConfirm}
         onCancel={() => setConfirmOpen(false)}
       />
+
     </form>
     
   );

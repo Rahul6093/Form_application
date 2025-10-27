@@ -19,6 +19,7 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow  }) => {
   const [preview, setPreview] = useState(null); 
 
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (row) {
@@ -91,6 +92,7 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow  }) => {
 
   const handleConfirmSave = async () => {
     setConfirmOpen(false);
+    setLoading(true);
     try {
       const formattedDate = formData.date?.split("T")[0]; // ensure proper date
       const timeValue = formData.time && formData.time.length === 5 ? `${formData.time}:00` : formData.time;
@@ -124,8 +126,10 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow  }) => {
     } catch (err) {
       console.error(err);
       toast.error("Failed to update record", "error");
-
     }
+      finally {
+      setLoading(false); // stop buffer
+  }
   };
 
   const inputClass = (isEditable) =>
@@ -134,6 +138,13 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow  }) => {
   return (
     <div id="modal-overlay" className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 overflow-y-auto">
       <div className="bg-white rounded-lg shadow-xl p-6 w-[90%] sm:w-[420px] relative overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+
+      {loading && (
+          <div className="fixed inset-0 h-screen w-screen bg-black/50 flex justify-center items-center z-50">
+            <div className="loader"></div> 
+          </div>
+      )}
+
 
         <h2 className="text-xl font-semibold text-center mb-4 text-blue-700">Application Details</h2>
 
@@ -234,8 +245,8 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow  }) => {
             </button>
           ) : (
             <>
-              <button onClick={handleSave} className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
-                Save
+              <button onClick={handleSave} disabled={loading} className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                  {loading ? "Processing..." :  "Update" } 
               </button>
               <button
                 onClick={handleClose} // instead of manually resetting modal form
@@ -253,12 +264,14 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow  }) => {
 
   
       </div>
+
       <ConfirmModal
         open={confirmOpen}
         message="Do you want to update this record?"
         onConfirm={handleConfirmSave}
         onCancel={() => setConfirmOpen(false)}
       />
+
     </div>
   );
 };
