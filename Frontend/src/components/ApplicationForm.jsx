@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
+import { ConfirmModal } from "./ConfirmModal";
 
 export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
   const [formData, setFormData] = useState({
     number: "",
     name: "",
     date: "",
-    time: "",
+    time: "", 
     address: "",
     status: "Start",
     email: "",
@@ -19,6 +20,9 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
 
   const [isEdit, setIsEdit] = useState(false);
   const [originalNumber, setOriginalNumber] = useState(null); // ✅ track original number
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
 
   // Populate form on edit via selectedRow
   useEffect(() => {
@@ -111,12 +115,20 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
         }
       } catch (err) {
         console.error(err);
-        alert("Error fetching record");
+        toast.error("Record not found");
       }
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit  = () => {
+    setPendingAction("submit");
+    setConfirmOpen(true);
+  };
+
+  const handleConfirm = async () => {
+
+    setConfirmOpen(false);
+
     if (
       !formData.number ||
       !formData.name ||
@@ -125,7 +137,7 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
       !formData.address ||
       !formData.email
     ) {
-      return alert("All fields are required, including email");
+      return toast.error("All fields are required, including email");
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -142,6 +154,7 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
 
     const timeValue =
       formData.time.length === 5 ? `${formData.time}:00` : formData.time;
+
 
     try {
       if (isEdit) {
@@ -317,6 +330,14 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
           {isEdit ? "Edit" : "Add"}
         </button>
       </div>
+
+       <ConfirmModal
+        open={confirmOpen}
+        message={`Do you want to ${isEdit ? "update" : "add"} this record?`}
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </form>
+    
   );
 };

@@ -4,6 +4,7 @@ import bodyParser from "body-parser";
 import multer from "multer";
 import path from "path";
 import db from "./db.js";
+import "./reminderScheduler.js"; 
 import { sendApplicationEmail } from "./mailer.js";
 
 const app = express();

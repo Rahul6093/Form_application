@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
+import { ConfirmModal } from "./ConfirmModal";
 
-export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
+export const RowModal = ({ row, onClose, fetchData, setSelectedRow  }) => {
   const [editable, setEditable] = useState(false);
   const [formData, setFormData] = useState({
     number: "",
@@ -16,6 +17,8 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
   });
   const [image, setImage] = useState(null);      
   const [preview, setPreview] = useState(null); 
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (row) {
@@ -82,7 +85,12 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
     document.getElementById("fileInput") && (document.getElementById("fileInput").value = null);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
+    setConfirmOpen(true); // open confirmation
+  };
+
+  const handleConfirmSave = async () => {
+    setConfirmOpen(false);
     try {
       const formattedDate = formData.date?.split("T")[0]; // ensure proper date
       const timeValue = formData.time && formData.time.length === 5 ? `${formData.time}:00` : formData.time;
@@ -111,11 +119,11 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
 
       fetchData();
       onClose();
-      toast.success("Record updated successfully!");
+      toast.success("Record updated successfully!","success");
 
     } catch (err) {
       console.error(err);
-      toast.error("Failed to update record");
+      toast.error("Failed to update record", "error");
 
     }
   };
@@ -126,6 +134,7 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
   return (
     <div id="modal-overlay" className="fixed inset-0 flex items-center justify-center bg-black/70 z-50 overflow-y-auto">
       <div className="bg-white rounded-lg shadow-xl p-6 w-[90%] sm:w-[420px] relative overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+
         <h2 className="text-xl font-semibold text-center mb-4 text-blue-700">Application Details</h2>
 
         <div className="space-y-3 text-gray-700">
@@ -242,8 +251,15 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow }) => {
           </button>
         </div>
 
-        <Toaster position="top-center" reverseOrder={false} />
+  
       </div>
+      <ConfirmModal
+        open={confirmOpen}
+        message="Do you want to update this record?"
+        onConfirm={handleConfirmSave}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 };
+

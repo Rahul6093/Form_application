@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { ApplicationTable } from "./components/ApplicationTable";
 import { ApplicationForm } from "./components/ApplicationForm";
-import { Toaster } from "react-hot-toast";
+import toast,{ Toaster } from "react-hot-toast";
 
 export default function App() {
   const [data, setData] = useState([]);
@@ -28,7 +28,7 @@ export default function App() {
   return (
     <div className="min-h-screen w-screen overflow-y-hidden bg-gray-100 py-5">
       <h1 className="text-blue-700 font-bold text-center">Application Form</h1>
-      <Toaster className='z-50' position="top-right" reverseOrder={false} />
+      <Toaster position="top-right" reverseOrder={false} toastOptions={ {duration: 5000, removeDelay: 1000} }/>
       <ApplicationForm
         fetchData={fetchData}
         selectedRow={selectedRow}
