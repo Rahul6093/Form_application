@@ -10,13 +10,13 @@ export const ConfirmModal = ({ open, message, onConfirm, onCancel }) => {
         <div className="flex justify-center gap-4">
           <button
             onClick={onConfirm}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold"
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold"
           >
             Yes
           </button>
           <button
             onClick={onCancel}
-            className="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded font-semibold"
+            className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded font-semibold"
           >
             Cancel
           </button>

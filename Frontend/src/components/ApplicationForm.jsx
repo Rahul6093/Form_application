@@ -3,7 +3,7 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import { ConfirmModal } from "./ConfirmModal";
 
-export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
+export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow ,isAdmin}) => {
   const [formData, setFormData] = useState({
     number: "",
     name: "",
@@ -15,6 +15,7 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
     sendEmail: true,
   });
 
+  // console.log("isAdmin in ApplicationForm:", isAdmin,formData);
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null); 
 
@@ -26,7 +27,6 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
 
   const [loading, setLoading] = useState(false);
 
-  // Populate form on edit via selectedRow
   useEffect(() => {
     if (selectedRow) {
       setFormData({
@@ -97,6 +97,12 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
           `http://localhost:4000/api/applications/${formData.number}`
         );
         if (res.data) {
+
+             if (!isAdmin && res.data.status !== "Waiting") {
+              toast.error("Only records with status 'Waiting' can be seen");
+              return; // exit early
+        }   
+
           setFormData({
             number: res.data.number,
             name: res.data.name,
@@ -217,7 +223,7 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
             value={formData.number}
             onChange={handleChange}
             onKeyDown={handleNumberKeyPress}
-            placeholder="Enter number and press Enter"
+            placeholder={isAdmin ? "Enter number and press Enter" : ""}
             required
           />
         </div>
@@ -270,10 +276,20 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
             name="status"
             value={formData.status}
             onChange={handleChange}
+            defaultValue={"Waiting"}
           >
-            <option value="Start">Start</option>
+            {/* <option disabled={!isAdmin} value="Start">Start</option>
             <option value="Waiting">Waiting</option>
-            <option value="Close">Close</option>
+            <option disabled={!isAdmin} value="Close">Close</option> */}
+            {isAdmin ? (
+              <>
+                <option value="Start">Start</option>
+                <option value="Waiting">Waiting</option>
+                <option value="Close">Close</option>
+              </>
+            ) : (
+              <option value="Waiting">Waiting</option>
+            )}
           </select>
         </div>
 
@@ -288,7 +304,7 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
           />
         </div>
 
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center gap-2 mt-6">
           <input
             className="custom-checkbox"
             type="checkbox"
@@ -296,7 +312,7 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
             checked={formData.sendEmail}
             onChange={handleChange}
           />
-          <label>Send email notification?</label>
+          <label className="mt-1">Send email notification?</label>
         </div>
       </div>
 
@@ -335,11 +351,9 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow }) => {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={loading}
+          disabled={loading || (!isAdmin && isEdit) }
           className={`w-1/2 p-2 ${
-            isEdit
-              ? "bg-blue-500 hover:bg-blue-600"
-              : "bg-green-500 hover:bg-green-600"
+            !isAdmin && isEdit ? "hidden" : "bg-blue-500 hover:bg-blue-600"
           } text-white rounded-lg font-semibold`}
         >
           {loading ? "Processing..." : isEdit ? "Edit" : "Add"}

@@ -3,7 +3,7 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import { ConfirmModal } from "./ConfirmModal";
 
-export const RowModal = ({ row, onClose, fetchData, setSelectedRow  }) => {
+export const RowModal = ({ row, onClose, fetchData, setSelectedRow, isAdmin  }) => {
   const [editable, setEditable] = useState(false);
   const [formData, setFormData] = useState({
     number: "",
@@ -206,8 +206,14 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow  }) => {
           {editable && (
             <>
               <div className="flex items-center gap-2 mt-2">
-                <input type="checkbox" name="sendEmail" checked={formData.sendEmail} onChange={handleChange} />
-                <label>Send email notification?</label>
+                <input
+                  className="custom-checkbox"
+                  type="checkbox"
+                  name="sendEmail"
+                  checked={formData.sendEmail}
+                  onChange={handleChange}
+                />
+                <label className="mt-1">Send email notification?</label>
               </div>
 
               <div className="flex flex-col mt-2">
@@ -240,7 +246,7 @@ export const RowModal = ({ row, onClose, fetchData, setSelectedRow  }) => {
 
         <div className="flex justify-between mt-4">
           {!editable ? (
-            <button onClick={() => setEditable(true)} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+            <button disabled={!isAdmin} onClick={() => setEditable(true)} className={isAdmin ? "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" : "hidden"}>
               Modify
             </button>
           ) : (

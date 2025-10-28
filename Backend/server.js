@@ -6,6 +6,8 @@ import path from "path";
 import db from "./db.js";
 import "./reminderScheduler.js"; 
 import { sendApplicationEmail } from "./mailer.js";
+import loginRoute from "../Backend/Routes/login.js";
+import usersRoute from "../Backend/Routes/users.js";
 
 const app = express();
 
@@ -21,6 +23,9 @@ app.use("/uploads", express.static("uploads"));
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use("/api/login", loginRoute); // login
+app.use("/api/users", usersRoute); // users management
+
 
 /* ------------------------------- FETCH ALL ------------------------------- */
 app.get("/api/applications", (req, res) => {
@@ -73,6 +78,7 @@ app.post("/api/applicationsadd", upload.single("image"), (req, res) => {
     res.json({ message: "Record added successfully" });
   });
 });
+
 
 /* ----------------------------- EDIT EXISTING ----------------------------- */
 app.put("/api/applicationsedit/:originalNumber", upload.single("image"), (req, res) => {

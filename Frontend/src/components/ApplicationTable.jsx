@@ -8,7 +8,7 @@ import toast, { Toaster } from "react-hot-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-export const ApplicationTable = ({ data, fetchData, onRowClick, setSelectedRow }) => {
+export const ApplicationTable = ({ data, fetchData, onRowClick, setSelectedRow, isAdmin }) => {
   const [modalData, setModalData] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -57,7 +57,8 @@ export const ApplicationTable = ({ data, fetchData, onRowClick, setSelectedRow }
       formatDate(row.date).includes(term) ||
       (row.time || "").includes(term)
     );
-  });
+  })
+  .filter((row) => (isAdmin ? true : row.status === "Waiting")); //  only Waiting for non-admin
 
   const downloadPDF = () => {
   
@@ -150,9 +151,10 @@ export const ApplicationTable = ({ data, fetchData, onRowClick, setSelectedRow }
         />
 
         <div className="space-x-5"> 
+
           <button
             onClick={downloadPDF}
-            className="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold"
+            className="ml-2 bg-[#d30e43] hover:bg-[#9a0c32] text-white px-4 py-2 rounded font-semibold"
           >
             Download PDF
           </button>
@@ -164,7 +166,7 @@ export const ApplicationTable = ({ data, fetchData, onRowClick, setSelectedRow }
 
       <div className="max-h-[308px] overflow-y-auto border border-gray-300 rounded-lg shadow-lg scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-white">
         <table className="w-full bg-white text-sm">
-          <thead className="bg-blue-600 text-white sticky top-0 z-10">
+          <thead className="bg-blue-600 text-white sticky -top-1 z-10 h-12">
             <tr>
               <th className="border p-2 text-left">Number</th>
               <th className="border p-2 text-left">Name</th>
@@ -173,7 +175,7 @@ export const ApplicationTable = ({ data, fetchData, onRowClick, setSelectedRow }
               <th className="border p-2 text-left">Address</th>
               <th className="border p-2 text-left">Status</th>
               <th className="border p-2 text-left">Email</th>
-              <th className="border p-2 text-center">Action</th>
+              <th disabled={!isAdmin} className={isAdmin? "border p-2 text-center" : "hidden" }>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -191,10 +193,10 @@ export const ApplicationTable = ({ data, fetchData, onRowClick, setSelectedRow }
                   <td className="p-2">{row.address}</td>
                   <td className="p-2 text-center">{row.status}</td>
                   <td className="p-2 text-center">{row.email}</td>
-                  <td className="p-2 text-center">
+                  <td disabled={!isAdmin} className={isAdmin? "p-2 text-center" : "hidden" }>
                     <button
                       onClick={(e) => handleDelete(row.number, e)}
-                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
                     >
                       Delete
                     </button>
@@ -212,7 +214,7 @@ export const ApplicationTable = ({ data, fetchData, onRowClick, setSelectedRow }
         </table>
       </div>
 
-      {modalData && <RowModal row={modalData} onClose={closeModal}  setSelectedRow={setSelectedRow} fetchData={fetchData} />}
+      {modalData && <RowModal row={modalData} onClose={closeModal}  setSelectedRow={setSelectedRow} fetchData={fetchData} isAdmin={isAdmin} />}
       <ConfirmModal
         open={confirmOpen}
         message="Do you want to delete this record?"
