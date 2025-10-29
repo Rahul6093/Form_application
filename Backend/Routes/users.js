@@ -50,14 +50,13 @@ router.put("/:id", (req, res) => {
         return res.status(500).json({ error: "Failed to update user" });
         console.log("no error",result );
        return  res.json({ message: "User updated successfully" });
-        // console.log("error:",err );
 
     }
   );
 });
 
 // Delete user
-router.delete("api/users/:id", (req, res) => {
+router.delete("/:id", (req, res) => {
   const { id } = req.params;
   db.query("DELETE FROM auth WHERE id = ?", [id], (err) => {
     if (err) return res.status(500).json({ error: "Failed to delete user" });

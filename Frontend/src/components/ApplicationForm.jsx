@@ -129,15 +129,6 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow ,isAdmi
   };
 
   const handleSubmit  = () => {
-    setPendingAction("submit");
-    setConfirmOpen(true);
-  };
-
-  const handleConfirm = async () => {
-
-    setConfirmOpen(false);
-    setLoading(true); 
-
     if (
       !formData.number ||
       !formData.name ||
@@ -153,6 +144,14 @@ export const ApplicationForm = ({ fetchData, selectedRow, setSelectedRow ,isAdmi
     if (!emailRegex.test(formData.email)) {
     return toast.error("Please enter a valid email address");
    }
+    setPendingAction("submit");
+    setConfirmOpen(true);
+  };
+
+  const handleConfirm = async () => {
+
+    setConfirmOpen(false);
+    setLoading(true);  
 
     const formPayload = new FormData();
     Object.entries(formData).forEach(([key, value]) =>

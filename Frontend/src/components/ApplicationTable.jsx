@@ -4,6 +4,7 @@ import { RowModal } from "./RowModal";
 import { ConfirmModal } from "./ConfirmModal";
 import { ExcelExportdropdown } from "./ExcelExportDropdown";
 import toast, { Toaster } from "react-hot-toast";
+import { EmailFormat } from "./emailFormat";
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -14,6 +15,8 @@ export const ApplicationTable = ({ data, fetchData, onRowClick, setSelectedRow, 
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteNumber, setPendingDeleteNumber] = useState(null);
+
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
   const handleDelete = async (number, e) => {
     e.stopPropagation();
@@ -153,8 +156,15 @@ export const ApplicationTable = ({ data, fetchData, onRowClick, setSelectedRow, 
         <div className="space-x-5"> 
 
           <button
+            onClick={() => setShowEmailModal(true)}
+            className={`${!isAdmin ? "hidden" : "inline-flex"} bg-[#cf9d08]  hover:bg-[#957107]  text-white rounded font-semibold px-4 py-2 shadow-lg transition`}
+          >
+            Email Template
+          </button>
+
+          <button
             onClick={downloadPDF}
-            className="ml-2 bg-[#d30e43] hover:bg-[#9a0c32] text-white px-4 py-2 rounded font-semibold"
+            className="bg-[#d30e43] hover:bg-[#9a0c32] text-white px-4 py-2 rounded font-semibold"
           >
             Download PDF
           </button>
@@ -213,6 +223,8 @@ export const ApplicationTable = ({ data, fetchData, onRowClick, setSelectedRow, 
           </tbody>
         </table>
       </div>
+
+      <EmailFormat show={showEmailModal} onClose={() => setShowEmailModal(false)} />
 
       {modalData && <RowModal row={modalData} onClose={closeModal}  setSelectedRow={setSelectedRow} fetchData={fetchData} isAdmin={isAdmin} />}
       <ConfirmModal

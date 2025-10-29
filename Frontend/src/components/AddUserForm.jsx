@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { UserManagementModal } from "./UserManagementModal";
+import { ConfirmModal } from "./ConfirmModal";
 
 export const AddUserForm = ({ fetchData }) => {
   const [formData, setFormData] = useState({
@@ -11,27 +12,18 @@ export const AddUserForm = ({ fetchData }) => {
   });
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const { username, password, permission } = formData;
-
-    if (!username || !password || !permission) {
-      return toast.error("All fields are required");
-    }
-
-    if (password.length < 6) {
-      return toast.error("Password should be at least 6 characters");
-    }
-
+  const handleAddUser = async () => {
+    setConfirmOpen(false);
     setLoading(true);
     try {
-      await axios.post("http://localhost:4000/api/login/users", formData);
+      await axios.post("http://localhost:4000/api/users", formData);
       toast.success("User added successfully!");
       setFormData({ username: "", password: "", permission: "User" });
       fetchData();
@@ -43,9 +35,22 @@ export const AddUserForm = ({ fetchData }) => {
     }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const { username, password, permission } = formData;
+    if (!username || !password || !permission) {
+      return toast.error("All fields are required");
+    }
+
+    if (password.length < 6) {
+      return toast.error("Password should be at least 6 characters");
+    }
+    setConfirmOpen(true); 
+  };
+
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-3 text-black">
+      <form onSubmit={handleSubmit} className="relative space-y-3 text-gray-800">
         <div className="flex flex-col">
           <label>Username</label>
           <input
@@ -85,7 +90,7 @@ export const AddUserForm = ({ fetchData }) => {
 
         <div className="flex gap-2">
           <button
-            type="submit"
+            onClick={handleSubmit}
             disabled={loading}
             className={`flex-1 p-2 mt-2 text-white rounded ${
               loading ? "bg-gray-400" : "bg-green-500 hover:bg-green-600"
@@ -105,6 +110,14 @@ export const AddUserForm = ({ fetchData }) => {
       </form>
 
       <UserManagementModal show={showModal} onClose={() => setShowModal(false)} />
+
+      <ConfirmModal
+        open={confirmOpen}
+        message={`Are you sure you want to add ${formData.username}?`}
+        onConfirm={handleAddUser}
+        onCancel={() => setConfirmOpen(false)}
+        variant = "bubble_overlay"
+      />
     </>
   );
 }

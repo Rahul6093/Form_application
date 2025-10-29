@@ -8,6 +8,7 @@ import "./reminderScheduler.js";
 import { sendApplicationEmail } from "./mailer.js";
 import loginRoute from "../Backend/Routes/login.js";
 import usersRoute from "../Backend/Routes/users.js";
+import emailTemplateRouter from "../Backend/Routes/emailTemplates.js";
 
 const app = express();
 
@@ -25,7 +26,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use("/api/login", loginRoute); // login
 app.use("/api/users", usersRoute); // users management
-
+app.use("/api/emailTemplates", emailTemplateRouter); // email templates
 
 /* ------------------------------- FETCH ALL ------------------------------- */
 app.get("/api/applications", (req, res) => {

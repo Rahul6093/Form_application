@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import path from "path";
 import fs from "fs";
-import { htmlEmail } from "./htmlEmail.js";
+import { FormEmailFormat } from "./FormEmailFormat.js";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -20,7 +20,7 @@ export const sendApplicationEmail = async (data,  imagePath = null, oldEmail = n
     from: "Testingdemonas@gmail.com",
     to: email,
     subject: "Application Update",
-    html: intro + htmlEmail({ name, date, time, address, status }),
+    html: intro + FormEmailFormat({ name, date, time, address, status }),
       };
   
   if (imagePath && fs.existsSync(imagePath)) {
